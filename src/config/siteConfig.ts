@@ -13,7 +13,7 @@ export const siteConfig: SiteConfig = {
 	subtitle: "个人博客",
 
 	// 站点 URL
-	site_url: "https://www.bahua.de",
+	site_url: "https://astro.bahua.de",
 
 	// 站点描述
 	description:
