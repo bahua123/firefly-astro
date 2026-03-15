@@ -1,0 +1,38 @@
+---
+import { Icon } from "astro-icon/components";
+import WidgetLayout from "@/components/common/WidgetLayout.astro";
+import { getRecentPosts } from "@/utils/content-utils";
+import { formatDateToYYYYMMDD } from "@/utils/date-utils";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+
+const recentPosts = await getRecentPosts(5);
+
+interface Props {
+	class?: string;
+	style?: string;
+}
+const className = Astro.props.class;
+const style = Astro.props.style;
+---
+
+<WidgetLayout name={i18n(I18nKey.recentPosts)} id="recent-posts" class={className} style={style}
+>
+	<ul class="space-y-2">
+		{recentPosts.map((post) => (
+			<li class="recent-post-item group">
+				<a href={post.url} class="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+					<Icon name="material-symbols:schedule-outline-rounded" class="flex-shrink-0 text-sm text-neutral-400" />
+					<div class="flex-1 min-w-0">
+						<span class="text-sm text-neutral-700 dark:text-neutral-300 group-hover:text-(--primary) transition-colors line-clamp-2">
+							{post.title}
+						</span>
+						<span class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 block">
+							{formatDateToYYYYMMDD(post.published)}
+						</span>
+					</div>
+				</a>
+			</li>
+		))}
+	</ul>
+</WidgetLayout>

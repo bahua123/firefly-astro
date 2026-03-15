@@ -1,0 +1,212 @@
+---
+/**
+ * Django文章加载器组件
+ * 在客户端异步加载Django API的文章
+
+ * 并追加到页面显示区域
+ */
+---
+
+<div id="django-articles-container">
+  <!-- Django API文章将在这里加载 -->
+</div>
+
+<script>
+  interface DjangoArticle {
+    id: number;
+    title: string;
+    body: string;
+    pub_time: string;
+    views: number;
+    likes: number;
+    category?: {
+      name: string;
+    };
+    tags?: Array<{ name: string }>;
+    get_first_image_url?: string;
+  }
+
+  const API_BASE_URL = 'http://localhost:8000/api';
+  
+  async function loadDjangoArticles() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/articles/?page_size=10`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      
+      const data = await response.json();
+      const articles = Array.isArray(data) ? data : data.results || [];
+      
+      if (articles.length === 0) return;
+      
+      const container = document.getElementById('django-articles-container');
+      if (!container) return;
+      
+      // 创建分隔符
+      const separator = document.createElement('div');
+      separator.className = 'django-articles-separator';
+      separator.innerHTML = '<h3 style="text-align: center; color: #999; margin: 3rem 0; padding-top: 2rem; border-top: 1px solid #eee;">来自Django的更多文章</h3>';
+      container.appendChild(separator);
+      
+      // 创建文章卡片
+      const articlesGrid = document.createElement('div');
+      articlesGrid.className = 'django-articles-grid';
+      
+      articles.forEach((article: DjangoArticle) => {
+        const excerpt = article.body
+          .replace(/#{1,6}\s*/g, '')
+          .replace(/\*\*/g, '')
+          .replace(/`/g, '')
+          .substring(0, 100) + '...';
+        
+        // 文章详情页URL（统一使用 /posts/ 路径）
+        const articleUrl = `/posts/${article.id}/`;
+        
+        const card = document.createElement('article');
+        card.className = 'article-card';
+        card.innerHTML = `
+          <a href="${articleUrl}" class="article-link" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%;">
+            <div class="article-content">
+              <h2 class="article-title">${article.title}</h2>
+              <div class="article-meta">
+                <span>📅 ${new Date(article.pub_time).toLocaleDateString('zh-CN')}</span>
+                <span>👁️ ${article.views}</span>
+                <span>👍 ${article.likes}</span>
+              </div>
+              <p class="article-excerpt">${excerpt}</p>
+              <div class="article-tags">
+                ${article.category ? `<span class="category-tag">${article.category.name}</span>` : ''}
+                ${article.tags?.slice(0, 2).map((tag: any) => `<span class="tag">#${tag.name}</span>`).join('') || ''}
+              </div>
+            </div>
+          </a>
+        `;
+        articlesGrid.appendChild(card);
+      });
+      
+      container.appendChild(articlesGrid);
+      console.log(`✅ 已加载${articles.length}篇Django文章`);
+      
+    } catch (error) {
+      console.warn('加载Django文章失败:', error);
+      // 静默失败，不显示错误信息
+    }
+  }
+  
+  // 页面加载完成后异步加载
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadDjangoArticles);
+  } else {
+    loadDjangoArticles();
+  }
+</script>
+
+<style is:global>
+  .django-articles-separator {
+    margin-top: 4rem;
+    margin-bottom: 2rem;
+  }
+  
+  .django-articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 4rem;
+  }
+  
+  .django-articles-grid .article-card {
+    background: var(--card-bg, #f8f9fa);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .django-articles-grid .article-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .django-articles-grid .article-link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .django-articles-grid .article-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .django-articles-grid .article-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    line-height: 1.4;
+    color: var(--text-primary, #1a1a1a);
+    flex-shrink: 0;
+    transition: color 0.2s ease;
+  }
+
+  .django-articles-grid .article-card:hover .article-title {
+    color: #667eea;
+  }
+  
+  .django-articles-grid .article-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #666);
+    margin-bottom: 12px;
+    flex-shrink: 0;
+  }
+  
+  .django-articles-grid .article-excerpt {
+    font-size: 0.9rem;
+    color: var(--text-secondary, #555);
+    line-height: 1.6;
+    margin: 0 0 12px 0;
+    flex-grow: 1;
+  }
+  
+  .django-articles-grid .article-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: auto;
+  }
+  
+  .django-articles-grid .category-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #667eea;
+    color: white;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  
+  .django-articles-grid .tag {
+    display: inline-block;
+    padding: 4px 10px;
+    background: #e0e7ff;
+    color: #4f46e5;
+    border-radius: 12px;
+    font-size: 0.75rem;
+  }
+
+  /* 响应式调整 */
+  @media (max-width: 768px) {
+    .django-articles-grid {
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 16px;
+    }
+    
+    .django-articles-grid .article-title {
+      font-size: 1rem;
+    }
+  }
+</style>

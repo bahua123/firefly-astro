@@ -1,0 +1,325 @@
+---
+interface Props {
+  title: string;
+  image: string;
+  url: string;
+  articleId?: string;
+}
+
+const { title, image, url, articleId } = Astro.props;
+---
+
+<div 
+  id="notification-card" 
+  class="notification-card"
+  data-article-id={articleId}
+>
+  <!-- 卡片主体 -->
+  <div class="notification-content">
+    <!-- 圆形进度条包裹关闭按钮 -->
+    <div class="progress-ring-container">
+      <svg class="progress-ring" width="44" height="44">
+        <circle
+          class="progress-ring-bg"
+          stroke="var(--line-divider, #e5e7eb)"
+          stroke-width="3"
+          fill="transparent"
+          r="18"
+          cx="22"
+          cy="22"
+        />
+        <circle
+          class="progress-ring-circle"
+          stroke="var(--primary, #10b981)"
+          stroke-width="3"
+          fill="transparent"
+          r="18"
+          cx="22"
+          cy="22"
+        />
+      </svg>
+      <!-- 关闭按钮 -->
+      <button class="close-btn" id="notification-close" aria-label="关闭">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M1 1L13 13M1 13L13 1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    
+    <!-- 内容区域 -->
+    <a href={url} class="notification-link">
+      {image && (
+        <img 
+          src={image} 
+          alt={title} 
+          class="notification-image"
+          loading="lazy"
+        />
+      )}
+      <div class="notification-text">
+        <span class="notification-label">热门推荐</span>
+        <span class="notification-title">{title}</span>
+      </div>
+    </a>
+    
+    <!-- 不再显示选项 -->
+    <label class="notification-dont-show">
+      <input type="checkbox" id="notification-dont-show" />
+      <span>不再显示</span>
+    </label>
+  </div>
+</div>
+
+<style>
+  .notification-card {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    font-family: inherit;
+    animation: slideIn 0.3s ease-out;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(100px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .notification-card.hidden {
+    display: none;
+  }
+
+  .notification-content {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--line-divider, #e5e7eb);
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    min-width: 280px;
+    max-width: 400px;
+  }
+
+  /* 进度条环容器 - 包裹关闭按钮 */
+  .progress-ring-container {
+    position: absolute;
+    top: -22px;
+    right: -22px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .progress-ring {
+    position: absolute;
+    transform: rotate(-90deg);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .progress-ring-circle {
+    stroke-dasharray: 113;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 10s linear;
+    stroke-linecap: round;
+  }
+
+  .progress-ring-circle.animating {
+    stroke-dashoffset: 113;
+  }
+
+  /* 关闭按钮 - 位于进度条环中心 */
+  .close-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--line-divider, #e5e7eb);
+    color: var(--text-secondary, #6b7280);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 10;
+    position: relative;
+  }
+
+  .close-btn:hover {
+    background: var(--error, #ef4444);
+    color: white;
+    border-color: var(--error, #ef4444);
+  }
+
+  /* 链接内容 */
+  .notification-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .notification-link:hover .notification-title {
+    color: var(--primary, #10b981);
+  }
+
+  .notification-image {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .notification-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .notification-label {
+    font-size: 11px;
+    color: var(--primary, #10b981);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .notification-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary, #1f2937);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color 0.2s ease;
+  }
+
+  /* 不再显示 */
+  .notification-dont-show {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary, #6b7280);
+    cursor: pointer;
+    white-space: nowrap;
+    margin-left: auto;
+  }
+
+  .notification-dont-show input {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: var(--primary, #10b981);
+  }
+
+  /* 移动端适配 */
+  @media (max-width: 640px) {
+    .notification-card {
+      bottom: 16px;
+      right: 16px;
+      left: 16px;
+    }
+
+    .notification-content {
+      min-width: auto;
+      max-width: none;
+    }
+  }
+</style>
+
+<script>
+  (function() {
+    const card = document.getElementById('notification-card');
+    const closeBtn = document.getElementById('notification-close');
+    const dontShowCheckbox = document.getElementById('notification-dont-show') as HTMLInputElement;
+    const progressCircle = document.querySelector('.progress-ring-circle') as SVGCircleElement;
+    const articleId = card?.dataset.articleId;
+
+    if (!card) return;
+
+    // 检查是否应该显示
+    const shouldShow = () => {
+      if (!articleId) return true;
+      const hiddenArticles = JSON.parse(localStorage.getItem('notification_hidden_articles') || '[]');
+      return !hiddenArticles.includes(articleId);
+    };
+
+    if (!shouldShow()) {
+      card.classList.add('hidden');
+      return;
+    }
+
+    // 开始进度条动画
+    setTimeout(() => {
+      if (progressCircle) {
+        progressCircle.classList.add('animating');
+      }
+    }, 100);
+
+    // 10秒后自动关闭
+    const autoCloseTimer = setTimeout(() => {
+      hideCard();
+    }, 10000);
+
+    // 关闭按钮点击
+    closeBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearTimeout(autoCloseTimer);
+      hideCard();
+    });
+
+    // 不再显示复选框
+    dontShowCheckbox?.addEventListener('change', () => {
+      if (dontShowCheckbox.checked && articleId) {
+        const hiddenArticles = JSON.parse(localStorage.getItem('notification_hidden_articles') || '[]');
+        if (!hiddenArticles.includes(articleId)) {
+          hiddenArticles.push(articleId);
+          localStorage.setItem('notification_hidden_articles', JSON.stringify(hiddenArticles));
+        }
+      }
+    });
+
+    // 隐藏卡片函数
+    function hideCard() {
+      clearTimeout(autoCloseTimer);
+      card.style.animation = 'slideOut 0.3s ease-out forwards';
+      
+      setTimeout(() => {
+        card.classList.add('hidden');
+      }, 300);
+    }
+
+    // 添加退出动画
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideOut {
+        from {
+          opacity: 1;
+          transform: translateX(0);
+        }
+        to {
+          opacity: 0;
+          transform: translateX(100px);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  })();
+</script>

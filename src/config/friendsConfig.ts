@@ -11,13 +11,13 @@ export const friendsPageConfig: FriendsPageConfig = {
 // 友链配置
 export const friendsConfig: FriendLink[] = [
 	{
-		title: "夏夜流萤",
-		imgurl: "https://q1.qlogo.cn/g?b=qq&nk=7618557&s=640",
-		desc: "飞萤之火自无梦的长夜亮起，绽放在终竟的明天。",
-		siteurl: "https://blog.cuteleaf.cn",
+		title: "bahua",
+		imgurl: "https://api.dicebear.com/7.x/shapes/svg?seed=bahua",
+		desc: "基于Django的博客系统",
+		siteurl: "http://localhost:8000/",
 		tags: ["Blog"],
-		weight: 10, // 权重，数字越大排序越靠前
-		enabled: true, // 是否启用
+		weight: 10,
+		enabled: true,
 	},
 	{
 		title: "Firefly Docs",

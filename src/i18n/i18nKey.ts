@@ -14,6 +14,8 @@ enum I18nKey {
 	tags = "tags",
 	categories = "categories",
 	recentPosts = "recentPosts",
+	hotPosts = "hotPosts",
+	ipCard = "ipCard",
 	postList = "postList",
 	tableOfContents = "tableOfContents",
 	music = "music",

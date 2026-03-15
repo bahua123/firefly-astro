@@ -33,17 +33,24 @@ import rehypeEmailProtection from "./src/plugins/rehype-email-protection.mjs";
 import rehypeExternalLinks from "./src/plugins/rehype-external-links.mjs";
 import rehypeFigure from "./src/plugins/rehype-figure.mjs";
 
+import node from "@astrojs/node";
+
 // https://astro.build/config
 export default defineConfig({
+	output: 'static',
+	adapter: node({
+		mode: 'standalone'
+	}),
 	site: siteConfig.site_url,
 
 	base: "/",
 	trailingSlash: "always",
 
-	// 图像优化配置
+	// 图像优化配置 - 修改这里，使用 noop 服务绕过 sharp
 	image: {
-		// 全局响应式布局
-		experimentalLayout: "constrained",
+		service: {
+			entrypoint: 'astro/assets/services/noop'
+		}
 	},
 
 	integrations: [

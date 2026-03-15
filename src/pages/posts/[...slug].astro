@@ -18,6 +18,8 @@ import { Icon } from "astro-icon/components";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import CoverImage from "@/components/common/CoverImage.astro";
+import AiSummary from "@/components/widget/AiSummary.astro";
+import NotificationCard from "@/components/widget/NotificationCard.astro";
 import PostMetadata from "@/components/layout/PostMeta.astro";
 import SharePoster from "@/components/misc/SharePoster.svelte";
 import { coverImageConfig } from "@/config/coverImageConfig";
@@ -28,35 +30,128 @@ import { sponsorConfig } from "@/config/sponsorConfig";
 import { formatDateToYYYYMMDD } from "@/utils/date-utils";
 import { getApiUrlList, processCoverImageSync } from "@/utils/image-utils";
 import { url } from "@/utils/url-utils";
+import { djangoApi, convertToFireflyPost } from "@/utils/djangoApi";
+import { processMarkdown } from "@/utils/markdownProcessor";
 
 export async function getStaticPaths() {
-	const blogEntries = await getSortedPosts();
-	return blogEntries.map((entry) => {
-		// 将 id 转换为 slug（移除扩展名）以匹配路由参数
-		const slug = removeFileExtension(entry.id);
+	const localEntries = await getSortedPosts();
+	const localPaths = localEntries.map((entry) => {
+		// 本地文章如 django-48.md，提取数字部分作为 slug
+		let slug = removeFileExtension(entry.id);
+		if (slug.startsWith('django-')) {
+			slug = slug.replace('django-', '');
+		}
 		return {
 			params: { slug },
-			props: { entry },
+			props: { entry, isDjango: false },
 		};
 	});
+
+	// 尝试获取 Django 文章
+	let djangoPaths = [];
+	try {
+		// 循环获取所有 Django 文章（处理分页）
+		let allDjangoArticles = [];
+		let page = 1;
+		while (true) {
+			const response = await djangoApi.fetchArticles(page, 50);
+			allDjangoArticles.push(...response.results);
+			if (!response.next) break;
+			page++;
+		}
+		const djangoArticles = allDjangoArticles;
+		
+		// 处理每篇 Django 文章的 Markdown
+		for (const article of djangoArticles) {
+			const processed = await processMarkdown(article.body);
+			const convertedPost = convertToFireflyPost(article);
+			// 将处理后的 HTML 存储在 postBody 中
+			convertedPost.postBody = processed.html;
+			convertedPost.processedHeadings = processed.headings;
+			convertedPost.wordCount = processed.wordCount;
+			convertedPost.readingTime = processed.readingTime;
+			
+			const slug = article.id.toString();
+			djangoPaths.push({
+				params: { slug },
+				props: { entry: convertedPost, isDjango: true },
+			});
+		}
+	} catch (error) {
+		console.warn("无法获取 Django 文章，跳过生成 Django 路径:", error);
+	}
+
+	// 获取热门文章
+	let hotArticle = null;
+	try {
+		const topArticles = await djangoApi.fetchTopArticles(1);
+		if (topArticles && topArticles.length > 0) {
+			hotArticle = {
+				id: topArticles[0].id.toString(),
+				title: topArticles[0].title,
+				image: topArticles[0].get_first_image_url || '',
+				url: "/posts/" + topArticles[0].id + "/",
+			};
+		}
+	} catch (error) {
+		console.warn("无法获取热门文章:", error);
+	}
+
+	// 合并路径，确保唯一性（如果 slug 冲突，本地文章优先）
+	const pathMap = new Map();
+	[...localPaths, ...djangoPaths].forEach((path) => {
+		const key = path.params.slug;
+		if (!pathMap.has(key)) {
+			pathMap.set(key, path);
+		}
+	});
+	return Array.from(pathMap.values()).map((path) => ({
+		...path,
+		props: {
+			...path.props,
+			hotArticle,
+		},
+	}));
 }
 
-const { entry } = Astro.props;
-const { Content, headings } = await render(entry);
+const { entry, isDjango, hotArticle } = Astro.props;
 
-const { remarkPluginFrontmatter } = await render(entry);
+let Content, headings, remarkPluginFrontmatter;
+let bannerPostMeta;
+let processedImage, apiUrls;
 
-const bannerPostMeta = {
-	title: entry.data.title,
-	published: entry.data.published,
-	updated: entry.data.updated,
-	words: remarkPluginFrontmatter.words,
-	minutes: remarkPluginFrontmatter.minutes,
-};
-
-// 处理随机图：如果image为"api"，则从配置的API获取随机图
-const processedImage = processCoverImageSync(entry.data.image, entry.id);
-const apiUrls = getApiUrlList(entry.data.image, entry.id);
+if (isDjango) {
+	// Django 文章：使用已处理的 HTML
+	headings = entry.processedHeadings || [];
+	remarkPluginFrontmatter = {
+		words: entry.wordCount || Math.ceil((entry.body?.length || 0) / 5),
+		minutes: entry.readingTime || Math.ceil((entry.body?.length || 0) / 1000),
+	};
+	bannerPostMeta = {
+		title: entry.data.title,
+		published: entry.data.published,
+		updated: entry.data.updated,
+		words: remarkPluginFrontmatter.words,
+		minutes: remarkPluginFrontmatter.minutes,
+	};
+	processedImage = processCoverImageSync(entry.data.image, entry.id);
+	apiUrls = getApiUrlList(entry.data.image, entry.id);
+} else {
+	// 本地 Firefly 文章
+	const renderResult = await render(entry);
+	Content = renderResult.Content;
+	headings = renderResult.headings;
+	remarkPluginFrontmatter = (await render(entry)).remarkPluginFrontmatter;
+	bannerPostMeta = {
+		title: entry.data.title,
+		published: entry.data.published,
+		updated: entry.data.updated,
+		words: remarkPluginFrontmatter.words,
+		minutes: remarkPluginFrontmatter.minutes,
+	};
+	processedImage = processCoverImageSync(entry.data.image, entry.id);
+	apiUrls = getApiUrlList(entry.data.image, entry.id);
+}
 
 let posterCoverUrl = processedImage;
 if (processedImage) {
@@ -224,6 +319,13 @@ const jsonLd = {
         }
       </div>
 
+      <!-- AI 总结卡片 -->
+      <AiSummary 
+        articleId={entry.id}
+        title={entry.data.title}
+        content={isDjango ? (entry.postBody || "") : (entry.body || "")}
+      />
+
       <!-- always show cover as long as it has one -->
 
       {
@@ -242,7 +344,7 @@ const jsonLd = {
       }
 
       <Markdown class="mb-6 markdown-content onload-animation">
-        <Content />
+        {isDjango ? <Fragment set:html={entry.postBody} /> : <Content />}
       </Markdown>
 
       {/* 赞助按钮 & 分享按钮 */}
@@ -428,4 +530,29 @@ const jsonLd = {
 
   <!-- 评论 -->
   {entry.data.comment && <Comment post={entry} />}
+
+  <!-- 热门文章推荐卡片 -->
+  {hotArticle && (
+    <NotificationCard 
+      title={hotArticle.title}
+      image={hotArticle.image}
+      url={hotArticle.url}
+      articleId={hotArticle.id}
+    />
+  )}
+
+  <!-- Django 文章图片 URL 修复脚本 -->
+  {isDjango && (
+    <script is:inline>
+      document.addEventListener('DOMContentLoaded', function() {
+        var imgs = document.querySelectorAll('.markdown-content img');
+        for (var i = 0; i < imgs.length; i++) {
+          if (imgs[i].src.indexOf('/static/article/') > -1) {
+            imgs[i].src = 'http://localhost:8000' + imgs[i].src;
+          }
+        }
+      });
+    </script>
+  )}
+}
 </MainGridLayout>

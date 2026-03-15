@@ -2,13 +2,14 @@ import { loadRenderers } from "astro:container";
 import { render } from "astro:content";
 import { getContainerRenderer as getMDXRenderer } from "@astrojs/mdx";
 import rss, { type RSSFeedItem } from "@astrojs/rss";
-import { getSortedPosts } from "@utils/content-utils";
+import { getCombinedPosts } from "@utils/content-utils";
 import { formatDateI18nWithTime } from "@utils/date-utils";
 import { url } from "@utils/url-utils";
 import type { APIContext } from "astro";
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
 import sanitizeHtml from "sanitize-html";
 import { siteConfig } from "@/config";
+import { processMarkdown } from "@/utils/markdownProcessor";
 import pkg from "../../package.json";
 
 function stripInvalidXmlChars(str: string): string {
@@ -20,14 +21,26 @@ function stripInvalidXmlChars(str: string): string {
 }
 
 export async function GET(context: APIContext) {
-	const blog = await getSortedPosts();
+	const blog = await getCombinedPosts();
 	const renderers = await loadRenderers([getMDXRenderer()]);
 	const container = await AstroContainer.create({ renderers });
 	const feedItems: RSSFeedItem[] = [];
+	
 	for (const post of blog) {
-		const { Content } = await render(post);
-		const rawContent = await container.renderToString(Content);
-		const cleanedContent = stripInvalidXmlChars(rawContent);
+		let cleanedContent: string;
+		
+		// 检查是否为 Django 文章
+		if ((post as any).isDjango) {
+			// Django 文章：处理 Markdown
+			const processed = await processMarkdown(post.body || "");
+			cleanedContent = stripInvalidXmlChars(processed.html);
+		} else {
+			// 本地 Firefly 文章：使用 Astro 渲染
+			const { Content } = await render(post);
+			const rawContent = await container.renderToString(Content);
+			cleanedContent = stripInvalidXmlChars(rawContent);
+		}
+		
 		feedItems.push({
 			title: post.data.title,
 			pubDate: post.data.published,
@@ -38,6 +51,7 @@ export async function GET(context: APIContext) {
 			}),
 		});
 	}
+	
 	return rss({
 		title: siteConfig.title,
 		description: siteConfig.subtitle || "No description",

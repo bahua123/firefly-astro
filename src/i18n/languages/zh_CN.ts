@@ -18,6 +18,8 @@ export const zh_CN: Translation = {
 	[Key.tags]: "标签",
 	[Key.categories]: "分类",
 	[Key.recentPosts]: "最新文章",
+	[Key.hotPosts]: "热门文章",
+	[Key.ipCard]: "访客信息",
 	[Key.postList]: "文章列表",
 	[Key.tableOfContents]: "目录",
 	[Key.music]: "音乐",

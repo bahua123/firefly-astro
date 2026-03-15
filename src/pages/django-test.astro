@@ -1,0 +1,175 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { djangoApi, convertToFireflyPost, getExcerpt } from "@/utils/djangoApi";
+
+// 从Django API获取数据
+let articles: any[] = [];
+let categories: any[] = [];
+let tags: any[] = [];
+let error: string | null = null;
+
+try {
+    // 获取文章
+    const articlesResponse = await djangoApi.fetchArticles(1, 5);
+    articles = articlesResponse.results;
+    
+    // 获取分类
+    categories = await djangoApi.fetchCategories();
+    
+    // 获取标签
+    tags = await djangoApi.fetchTags();
+} catch (err) {
+    error = err instanceof Error ? err.message : '未知错误';
+    console.error('Django API错误:', err);
+}
+
+// 转换为Firefly格式
+const fireflyPosts = articles.map(convertToFireflyPost);
+---
+
+<Layout title="Django API 测试" description="Firefly + Django API 集成测试">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold mb-8 text-center">Firefly + Django API 集成测试</h1>
+        
+        {error ? (
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+                <p class="font-bold">API连接错误</p>
+                <p>{error}</p>
+                <p class="mt-2 text-sm">请确保Django服务器正在运行在 http://localhost:8000</p>
+            </div>
+        ) : (
+            <>
+                <!-- 状态指示器 -->
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+                    <p class="font-bold">✅ Django API 连接成功</p>
+                    <p>成功获取 {articles.length} 篇文章, {categories.length} 个分类, {tags.length} 个标签</p>
+                </div>
+                
+                <!-- 文章列表 -->
+                <section class="mb-12">
+                    <h2 class="text-2xl font-bold mb-6 pb-2 border-b">最新文章</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {fireflyPosts.map((post, index) => (
+                            <article 
+                                class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+                                style={`animation-delay: ${index * 100}ms`}
+                            >
+                                {post.data.image && (
+                                    <div class="h-48 overflow-hidden">
+                                        <img 
+                                            src={post.data.image} 
+                                            alt={post.data.title}
+                                            class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                                        />
+                                    </div>
+                                )}
+                                <div class="p-6">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        {post.data.category && (
+                                            <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm font-medium rounded-full">
+                                                {post.data.category}
+                                            </span>
+                                        )}
+                                        <time class="text-gray-500 dark:text-gray-400 text-sm">
+                                            {new Date(post.data.published).toLocaleDateString('zh-CN')}
+                                        </time>
+                                    </div>
+                                    
+                                    <h3 class="text-xl font-bold mb-3 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                        <a href={`/posts/${post.slug}`}>{post.data.title}</a>
+                                    </h3>
+                                    
+                                    <p class="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
+                                        {getExcerpt(post.body, 120)}
+                                    </p>
+                                    
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                                            <span class="flex items-center gap-1">
+                                                <i class="i-fa7-solid-eye"></i>
+                                                {post._raw.views}
+                                            </span>
+                                            <span class="flex items-center gap-1">
+                                                <i class="i-fa7-solid-thumbs-up"></i>
+                                                {post._raw.likes}
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="flex flex-wrap gap-2">
+                                            {post.data.tags.slice(0, 2).map((tag: string) => (
+                                                <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded">
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                </section>
+                
+                <!-- 分类和标签 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- 分类 -->
+                    <section>
+                        <h2 class="text-2xl font-bold mb-6 pb-2 border-b">分类</h2>
+                        <div class="flex flex-wrap gap-3">
+                            {categories.map(category => (
+                                <a 
+                                    href={category.get_absolute_url}
+                                    class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
+                                >
+                                    <span class="font-medium">{category.name}</span>
+                                </a>
+                            ))}
+                        </div>
+                    </section>
+                    
+                    <!-- 标签 -->
+                    <section>
+                        <h2 class="text-2xl font-bold mb-6 pb-2 border-b">标签</h2>
+                        <div class="flex flex-wrap gap-2">
+                            {tags.map(tag => (
+                                <a 
+                                    href={tag.get_absolute_url}
+                                    class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 text-sm"
+                                >
+                                    #{tag.name}
+                                </a>
+                            ))}
+                        </div>
+                    </section>
+                </div>
+                
+                <!-- API信息 -->
+                <section class="mt-12 p-6 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <h2 class="text-2xl font-bold mb-4">API 信息</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-4 bg-white dark:bg-gray-900 rounded-lg">
+                            <h3 class="font-bold text-lg mb-2">文章API</h3>
+                            <code class="text-sm bg-gray-100 dark:bg-gray-700 p-2 rounded block">GET /api/articles/</code>
+                        </div>
+                        <div class="p-4 bg-white dark:bg-gray-900 rounded-lg">
+                            <h3 class="font-bold text-lg mb-2">分类API</h3>
+                            <code class="text-sm bg-gray-100 dark:bg-gray-700 p-2 rounded block">GET /api/categories/</code>
+                        </div>
+                        <div class="p-4 bg-white dark:bg-gray-900 rounded-lg">
+                            <h3 class="font-bold text-lg mb-2">标签API</h3>
+                            <code class="text-sm bg-gray-100 dark:bg-gray-700 p-2 rounded block">GET /api/tags/</code>
+                        </div>
+                    </div>
+                </section>
+            </>
+        )}
+    </div>
+    
+    <style>
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</Layout>

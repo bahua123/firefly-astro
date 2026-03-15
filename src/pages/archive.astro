@@ -3,11 +3,27 @@ import ArchivePanel from "@components/controls/ArchivePanel.svelte";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { getSortedPostsList } from "@/utils/content-utils";
+import { getSortedPostsList, getCombinedPosts } from "@/utils/content-utils";
 
 const sortedPostsList = await getSortedPostsList();
+
+// 尝试获取合并后的文章列表（Django + Firefly）
+let combinedPostsList;
+try {
+    const combinedPosts = await getCombinedPosts();
+    combinedPostsList = combinedPosts.map((post) => ({
+        id: post.id,
+        data: post.data,
+    }));
+} catch (error) {
+    console.warn("获取合并文章列表失败，使用本地文章:", error);
+    combinedPostsList = sortedPostsList;
+}
+
+// 使用合并后的文章列表
+const postsToShow = combinedPostsList || sortedPostsList;
 ---
 
 <MainGridLayout title={i18n(I18nKey.archive)}>
-  <ArchivePanel sortedPosts={sortedPostsList} client:only="svelte" />
+  <ArchivePanel sortedPosts={postsToShow} client:only="svelte" />
 </MainGridLayout>

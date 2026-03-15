@@ -4,8 +4,11 @@ import Advertisement from "@/components/widget/Advertisement.astro";
 import Announcement from "@/components/widget/Announcement.astro";
 import Calendar from "@/components/widget/Calendar.astro";
 import Categories from "@/components/widget/Categories.astro";
+import HotPosts from "@/components/widget/HotPosts.astro";
+import IpCard from "@/components/widget/IpCard.astro";
 import Music from "@/components/widget/Music.astro";
 import Profile from "@/components/widget/Profile.astro";
+import RecentPosts from "@/components/widget/RecentPosts.astro";
 import SidebarTOC from "@/components/widget/SidebarTOC.astro";
 import SiteStats from "@/components/widget/SiteStats.astro";
 import Tags from "@/components/widget/Tags.astro";
@@ -49,6 +52,9 @@ const componentMap = {
 	stats: SiteStats,
 	calendar: Calendar,
 	music: Music,
+	hotPosts: HotPosts,
+	recentPosts: RecentPosts,
+	ipCard: IpCard,
 } satisfies Record<WidgetComponentType, typeof Profile>;
 
 // 获取侧边栏位置

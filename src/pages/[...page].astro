@@ -4,12 +4,26 @@ import Pagination from "@/components/common/Pagination.astro";
 import PostPage from "@/components/layout/PostPage.astro";
 import { siteConfig } from "@/config";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
-import { getSortedPosts } from "@/utils/content-utils";
+import { getCombinedPosts } from "@/utils/content-utils";
 export const getStaticPaths = (async ({ paginate }) => {
-	const allBlogPosts = await getSortedPosts();
+	const allBlogPosts = await getCombinedPosts();
+
+	// 为每个文章预计算 URL（统一使用 /posts/ 路径）
+	const processedPosts = allBlogPosts.map(post => {
+		// 本地文章 id 如 "django-48"，提取数字部分生成 URL "/posts/48/"
+		const urlId = post.id.startsWith('django-') ? post.id.replace('django-', '') : post.id;
+		return {
+			...post,
+			// 统一链接到 /posts/[id]/，由 posts/[...slug].astro 处理渲染
+			_url: `/posts/${urlId}/`
+		};
+	});
+
+
+
 	// 使用配置中的文章数量
-	const pageSize = siteConfig.pagination.postsPerPage;
-	return paginate(allBlogPosts, { pageSize });
+  const pageSize = siteConfig.pagination.postsPerPage;
+  return paginate(processedPosts, { pageSize });
 }) satisfies GetStaticPaths;
 // https://github.com/withastro/astro/issues/6507#issuecomment-1489916992
 

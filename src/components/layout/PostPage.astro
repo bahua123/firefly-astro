@@ -38,24 +38,31 @@ const initialLayoutClass =
   data-grid-columns={gridColumns}
 >
   {
-    page.data.map((entry: PostEntry, index: number) => (
-      <PostCard
-        entry={entry}
-        title={entry.data.title}
-        tags={entry.data.tags}
-        category={entry.data.category}
-        published={entry.data.published}
-        updated={entry.data.updated}
-        url={getPostUrlBySlug(entry.id)}
-        image={entry.data.image}
-        description={entry.data.description}
-        draft={entry.data.draft}
-        pinned={entry.data.pinned}
-        loading={index < 2 ? "eager" : "lazy"}
-        class:list="onload-animation post-card-item"
-        style={`animation-delay: calc(var(--content-delay) + ${delay++ * interval}ms);`}
-      />
-    ))
+    (() => {
+      console.log('page.data length:', page.data.length);
+      console.log('page.data:', page.data.map(e => ({ id: e.id, hasRaw: !!e._raw, keys: Object.keys(e) })));
+      return page.data.map((entry: PostEntry, index: number) => {
+        console.log('entry', entry.id, 'has _raw?', '_raw' in entry, entry._raw);
+        return (
+          <PostCard
+            entry={entry}
+            title={entry.data.title}
+            tags={entry.data.tags}
+            category={entry.data.category}
+            published={entry.data.published}
+            updated={entry.data.updated}
+            url={entry._url || `/posts/${entry.id}/`}
+            image={entry.data.image}
+            description={entry.data.description}
+            draft={entry.data.draft}
+            pinned={entry.data.pinned}
+            loading={index < 2 ? "eager" : "lazy"}
+            class:list="onload-animation post-card-item"
+            style={`animation-delay: calc(var(--content-delay) + ${delay++ * interval}ms);`}
+          />
+        );
+      });
+    })()
   }
 </div>
 

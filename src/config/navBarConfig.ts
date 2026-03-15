@@ -37,6 +37,7 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 
 			// 根据配置决定是否添加番组计划，在siteConfig关闭pages.bangumi时导航栏不显示番组计划
 			...(siteConfig.pages.bangumi ? [LinkPreset.Bangumi] : []),
+
 		],
 	});
 
@@ -51,6 +52,13 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 
 			// 关于页面
 			LinkPreset.About,
+
+			// 数据看板
+			...(siteConfig.pages.statistics ? [{
+				name: "数据看板",
+				url: "/statistics/",
+				icon: "material-symbols:bar-chart",
+			}] : []),
 		],
 	});
 
@@ -63,22 +71,16 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 		// 子菜单
 		children: [
 			{
+				name: "主站",
+				url: "http://localhost:8000/",
+				external: true,
+				icon: "fa7-solid:globe",
+			},
+			{
 				name: "GitHub",
-				url: "https://github.com/CuteLeaf/Firefly",
+				url: "https://github.com/bahua123",
 				external: true,
 				icon: "fa7-brands:github",
-			},
-			{
-				name: "Gitee",
-				url: "https://gitee.com/CuteLeaf/Firefly",
-				external: true,
-				icon: "fa7-brands:gitee",
-			},
-			{
-				name: "QQ交流群",
-				url: "https://qm.qq.com/q/ZGsFa8qX2G",
-				external: true,
-				icon: "fa7-brands:qq",
 			},
 		],
 	});

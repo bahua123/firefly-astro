@@ -143,6 +143,26 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			showOnNonPostPage: false,
 		},
 		{
+			// 组件类型：近期文章（从 Django 获取）
+			type: "recentPosts",
+			// 是否启用该组件
+			enable: true,
+			// 组件位置
+			position: "sticky",
+			// 是否在文章详情页显示
+			showOnPostPage: true,
+		},
+		{
+			// 组件类型：热门文章（从 Django 获取，按浏览量排序）
+			type: "hotPosts",
+			// 是否启用该组件
+			enable: true,
+			// 组件位置
+			position: "sticky",
+			// 是否在文章详情页显示
+			showOnPostPage: true,
+		},
+		{
 			// 组件类型：广告栏组件 2
 			type: "advertisement",
 			// 是否启用该组件
@@ -216,6 +236,16 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 			enable: true,
 			// 是否在文章详情页显示
 			showOnPostPage: true,
+		},
+		{
+			// 组件类型：IP 访客信息卡片
+			type: "ipCard",
+			// 是否启用该组件
+			enable: true,
+			// 是否在文章详情页显示
+			showOnPostPage: false,
+			// 是否在非文章详情页显示
+			showOnNonPostPage: true,
 		},
 	],
 };

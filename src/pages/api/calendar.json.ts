@@ -1,11 +1,11 @@
-import { getSortedPosts } from "@/utils/content-utils";
+import { getCombinedPosts } from "@/utils/content-utils";
 
 export async function GET() {
-	const posts = await getSortedPosts();
+	const posts = await getCombinedPosts();
 
 	const allPostsData = posts
 		.map((post) => ({
-			id: post.id,
+			id: post.id.startsWith('django-') ? post.id.replace('django-', '') : post.id,
 			title: post.data.title,
 			published: post.data.published.getTime(),
 		}))

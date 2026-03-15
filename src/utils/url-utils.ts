@@ -22,7 +22,11 @@ function joinUrl(...parts: string[]): string {
 
 export function getPostUrlBySlug(slug: string): string {
 	// 移除文件扩展名（如 .md, .mdx 等）
-	const slugWithoutExt = removeFileExtension(slug);
+	let slugWithoutExt = removeFileExtension(slug);
+	// 本地文章如 django-45，提取数字部分
+	if (slugWithoutExt.startsWith('django-')) {
+		slugWithoutExt = slugWithoutExt.replace('django-', '');
+	}
 	return url(`/posts/${slugWithoutExt}/`);
 }
 
