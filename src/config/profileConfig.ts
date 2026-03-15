@@ -24,7 +24,7 @@ export const profileConfig: ProfileConfig = {
 		{
 			name: "主站",
 			icon: "fa7-solid:globe",
-			url: "http://localhost:8000/",
+			url: "https://blog.bahua.de/",
 			showName: true,
 		},
 		{

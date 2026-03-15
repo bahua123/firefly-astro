@@ -72,7 +72,7 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 		children: [
 			{
 				name: "主站",
-				url: "http://localhost:8000/",
+				url: "https://blog.bahua.de/",
 				external: true,
 				icon: "fa7-solid:globe",
 			},

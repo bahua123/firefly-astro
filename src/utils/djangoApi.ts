@@ -1,5 +1,5 @@
 // Django API 客户端
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.PUBLIC_API_URL ? `${import.meta.env.PUBLIC_API_URL}/api` : 'http://localhost:8000/api';
 
 export interface DjangoArticle {
     id: number;

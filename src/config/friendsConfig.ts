@@ -14,7 +14,7 @@ export const friendsConfig: FriendLink[] = [
 		title: "bahua",
 		imgurl: "https://api.dicebear.com/7.x/shapes/svg?seed=bahua",
 		desc: "基于Django的博客系统",
-		siteurl: "http://localhost:8000/",
+		siteurl: "https://blog.bahua.de/",
 		tags: ["Blog"],
 		weight: 10,
 		enabled: true,
