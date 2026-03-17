@@ -22,6 +22,15 @@ export interface ProcessedMarkdown {
     readingTime: number;
 }
 
+function convertRelativeUrlsToAbsolute(html: string): string {
+    const apiUrl = 'http://localhost:8000';
+    
+    return html.replace(
+        /src="(\/(?:static|media)\/[^"]+)"/g,
+        `src="${apiUrl}$1"`
+    );
+}
+
 export async function processMarkdown(content: string): Promise<ProcessedMarkdown> {
     const processor = unified()
         .use(remarkParse)
@@ -42,7 +51,9 @@ export async function processMarkdown(content: string): Promise<ProcessedMarkdow
         .use(rehypeStringify, { allowDangerousHtml: true });
 
     const result = await processor.process(content);
-    const html = result.toString();
+    let html = result.toString();
+    
+    html = convertRelativeUrlsToAbsolute(html);
 
     const headings: Array<{ depth: number; slug: string; text: string }> = [];
     const headingRegex = /<h([1-6]) id="([^"]*)">([^<]*)<\/h[1-6]>/g;

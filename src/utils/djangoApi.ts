@@ -180,14 +180,13 @@ export const djangoApi = new DjangoApiClient();
 function convertBodyImageUrls(body: string): string {
     if (!body) return body;
     const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000';
-    // 只替换相对路径（不以 http: https: // 开头）
-    // 使用负向前瞻断言 (?!\w+:)(?!\/\/) 排除完整URL
+    // 替换相对路径为完整URL，保留已经是完整URL的路径不变
     return body.replace(
-        /!\[([^\]]*)\]\((?!\w+:)(?!\/\/)(\/static\//g,
-        `![$1](${apiUrl}/static/`
+        /!\[([^\]]*)\]\((\/static\/[^)]+)\)/g,
+        (match, alt, path) => `![${alt}](${apiUrl}${path})`
     ).replace(
-        /!\[([^\]]*)\]\((?!\w+:)(?!\/\/)(\/media\//g,
-        `![$1](${apiUrl}/media/`
+        /!\[([^\]]*)\]\((\/media\/[^)]+)\)/g,
+        (match, alt, path) => `![${alt}](${apiUrl}${path})`
     );
 }
 
