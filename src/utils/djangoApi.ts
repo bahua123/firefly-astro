@@ -176,18 +176,9 @@ class DjangoApiClient {
 // 创建单例实例
 export const djangoApi = new DjangoApiClient();
 
-// 辅助函数：将 body 中的相对路径转换为完整 URL
+// 辅助函数：Django已返回完整URL，无需转换
 function convertBodyImageUrls(body: string): string {
-    if (!body) return body;
-    const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000';
-    // 替换相对路径为完整URL，保留已经是完整URL的路径不变
-    return body.replace(
-        /!\[([^\]]*)\]\((\/static\/[^)]+)\)/g,
-        (match, alt, path) => `![${alt}](${apiUrl}${path})`
-    ).replace(
-        /!\[([^\]]*)\]\((\/media\/[^)]+)\)/g,
-        (match, alt, path) => `![${alt}](${apiUrl}${path})`
-    );
+    return body;
 }
 
 // 工具函数：将Django文章转换为Firefly格式
