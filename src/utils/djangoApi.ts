@@ -176,12 +176,30 @@ class DjangoApiClient {
 // 创建单例实例
 export const djangoApi = new DjangoApiClient();
 
+// 辅助函数：将 body 中的相对路径转换为完整 URL
+function convertBodyImageUrls(body: string): string {
+    if (!body) return body;
+    const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000';
+    // 只替换相对路径（不以 http: https: // 开头）
+    // 使用负向前瞻断言 (?!\w+:)(?!\/\/) 排除完整URL
+    return body.replace(
+        /!\[([^\]]*)\]\((?!\w+:)(?!\/\/)(\/static\//g,
+        `![$1](${apiUrl}/static/`
+    ).replace(
+        /!\[([^\]]*)\]\((?!\w+:)(?!\/\/)(\/media\//g,
+        `![$1](${apiUrl}/media/`
+    );
+}
+
 // 工具函数：将Django文章转换为Firefly格式
 export function convertToFireflyPost(article: DjangoArticle): any {
+    // 在转换前先替换 body 中的图片 URL
+    const convertedBody = convertBodyImageUrls(article.body);
+    
     return {
         id: article.id.toString(),
         slug: article.id.toString(),
-        body: article.body,
+        body: convertedBody,
         data: {
             title: article.title,
             published: new Date(article.pub_time),
