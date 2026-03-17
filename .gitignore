@@ -37,3 +37,6 @@ Firefly-docs/
 cache/
 package/
 .obsidian/
+
+# local symlink for development
+public/static/article
